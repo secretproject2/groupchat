@@ -196,37 +196,44 @@ document.getElementById('sendBtn').onclick = async () => {
 
 // Presence & User List
 function setupPresenceAndListeners() {
+  function setupPresenceAndListeners() {
+  const connectedRef = ref(db, ".info/connected");
+
+  onValue(connectedRef, (snap) => {
+    const isConnected = snap.val() === true;
+    console.log("[DEBUG] Connection state changed:", isConnected ? "CONNECTED" : "OFFLINE/DISCONNECTED");
+
+    if (isConnected) {
+      document.getElementById("online").textContent = "Connected! Syncing...";
+      // Then update with real count when presence loads
+    } else {
+      document.getElementById("online").textContent = "Offline or connecting...";
+    }
+  }, (error) => {
+    console.error("[ERROR] .info/connected listener failed:", error.code, error.message);
+    document.getElementById("online").textContent = "Connection error: " + (error.message || "Unknown");
+  });
+
+  // Your existing presence write...
   onValue(ref(db, '.info/connected'), snap => {
-    if (snap.val() && currentUser) {
+    if (snap.val() === true && currentUser) {
+      console.log("[DEBUG] Writing my presence now");
       const myRef = ref(db, `presence/${currentUser.uid}`);
       set(myRef, {
         name: currentUser.displayName || `Guest_${currentUser.uid.slice(0,6)}`,
         online: true,
         lastActive: serverTimestamp()
+      }).then(() => {
+        console.log("[DEBUG] Presence write succeeded");
+      }).catch(err => {
+        console.error("[ERROR] Presence write failed:", err);
       });
+
       onDisconnect(myRef).remove();
     }
   });
 
-  onValue(presenceRef, snap => {
-    const usersDiv = document.getElementById('users');
-    const countEl = document.getElementById('online-count');
-    usersDiv.innerHTML = '';
-
-    const users = snap.val() || {};
-    const onlineUsers = Object.entries(users).filter(([_, data]) => data.online);
-
-    countEl.textContent = onlineUsers.length;
-    document.getElementById('online').textContent =
-      onlineUsers.length > 1 ? `${onlineUsers.length} people doodling ✏️` : "Just you – invite friends!";
-
-    onlineUsers.forEach(([_, data]) => {
-      const item = document.createElement('div');
-      item.className = 'user-item';
-      item.innerHTML = `<div class="status-dot"></div><span class="user-name">${data.name || 'Anon'}</span>`;
-      usersDiv.appendChild(item);
-    });
-  });
+  // Rest of your onValue(presenceRef, ...) stays the same
 }
 
 // Messages
