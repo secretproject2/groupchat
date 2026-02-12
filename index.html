@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Group Chat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="chat-container">
+    <h2>Group Chat</h2>
+    <div id="chat"></div>
+
+    <input type="text" id="username" placeholder="Your name..." />
+    <input type="text" id="messageInput" placeholder="Type message..." />
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
+
+<script src="script.js"></script>
+</body>
+</html>
