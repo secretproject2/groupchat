@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -7,211 +7,49 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --primary: #4f46e5;
-      --primary-dark: #4338ca;
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --text: #1e293b;
-      --border: #e2e8f0;
-    }
-    * { box-sizing: border-box; margin:0; padding:0; }
-    body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 16px;
-    }
-    #auth {
-      max-width: 420px;
-      margin: 120px auto;
-      text-align: center;
-    }
-    #auth h1 { font-size: 2.25rem; margin-bottom: 16px; }
-    #auth p { color: #64748b; margin-bottom: 24px; }
-    button {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 14px 28px;
-      font-size: 1.125rem;
-      font-weight: 600;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    button:hover { background: var(--primary-dark); }
-
-    #chat {
-      max-width: 720px;
-      margin: 0 auto;
-      background: var(--card);
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-      overflow: hidden;
-      display: none;
-    }
-    #online, #myName {
-      padding: 12px 20px;
-      background: #f0f9ff;
-      text-align: center;
-      font-weight: 600;
-      border-bottom: 1px solid var(--border);
-    }
-    #messages {
-      height: 55vh;
-      min-height: 320px;
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .msg {
-      max-width: 80%;
-      padding: 12px 16px;
-      border-radius: 18px;
-      line-height: 1.45;
-      font-size: 1rem;
-    }
-    .msg.self {
-      background: #e0f2fe;
-      align-self: flex-end;
-      border-bottom-right-radius: 4px;
-    }
-    .msg.other {
-      background: #f1f5f9;
-      align-self: flex-start;
-      border-bottom-left-radius: 4px;
-    }
-    .msg strong { color: #334155; display: block; margin-bottom: 4px; font-size: 0.9rem; }
-    .msg img { max-width: 100%; border-radius: 10px; margin-top: 8px; display: block; }
-    #input-area {
-      padding: 16px 20px;
-      border-top: 1px solid var(--border);
-      background: white;
-    }
-    #messageInput {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      font-size: 1rem;
-      margin-bottom: 12px;
-    }
-    #canvas-container {
-      border: 2px dashed #cbd5e1;
-      border-radius: 12px;
-      overflow: hidden;
-      background: white;
-      margin-bottom: 12px;
-    }
-    #drawCanvas { width: 100%; height: 220px; touch-action: none; display: block; }
-    #tools {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-    }
-    #tools button {
-      padding: 10px 16px;
-      font-size: 0.95rem;
-    }
-    .color-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: 2px solid white;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    }
-    #status { color: #64748b; font-size: 0.9rem; text-align: center; padding: 8px; }
-
-    #nameModal {
-      display:none; 
-      position:fixed; 
-      inset:0; 
-      background:rgba(0,0,0,0.6); 
-      z-index:10000; 
-      align-items:center; 
-      justify-content:center; 
-      font-family: inherit;
-    }
-    #nameModal > div {
-      background:white; 
-      border-radius:16px; 
-      padding:32px; 
-      max-width:420px; 
-      width:92%; 
-      box-shadow:0 20px 40px rgba(0,0,0,0.2);
-    }
-    #nameModal h2 { margin-bottom:8px; font-size:1.5rem; }
-    #nameModal p { color:#64748b; margin-bottom:20px; }
-    #newNameInput {
-      width:100%; 
-      padding:14px; 
-      border:2px solid #e2e8f0; 
-      border-radius:12px; 
-      font-size:1.1rem; 
-      margin-bottom:24px;
-    }
-    #modalError {
-      color:#ef4444; 
-      font-size:0.95rem; 
-      min-height:24px; 
-      margin-bottom:12px;
-    }
-    #nameModal button {
-      padding:12px 24px; 
-      border:none; 
-      border-radius:12px; 
-      font-weight:600; 
-      cursor:pointer;
-    }
-    #cancelNameBtn { background:#64748b; color:white; }
-    #saveNameBtn { background:#4f46e5; color:white; }
-
-    @media (max-width: 500px) {
-      body { padding: 12px; }
-      #messages { height: 50vh; }
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
+  <header>
+    <h1>PictoGroup</h1>
+    <button id="theme-toggle">Dark Mode</button>
+  </header>
+
   <div id="auth">
     <h1>PictoGroup</h1>
-    <p>Draw & chat in one global room – modern PictoChat style! ✏️💬</p>
+    <p>Draw & chat in one global room – modern PictoChat vibes! ✏️💬</p>
     <button id="signInBtn">Join Anonymously</button>
   </div>
 
-  <div id="chat">
-    <div id="myName"></div>
-    <div id="online">Connecting...</div>
-    <div id="messages"></div>
+  <div id="main-container">
+    <div id="chat">
+      <div id="myName"></div>
+      <div id="online">Connecting...</div>
+      <div id="messages"></div>
 
-    <div id="input-area">
-      <input type="text" id="messageInput" placeholder="Type a message... or draw below" autocomplete="off" />
-
-      <div id="canvas-container">
-        <canvas id="drawCanvas"></canvas>
+      <div id="input-area">
+        <input type="text" id="messageInput" placeholder="Type a message... or draw below" autocomplete="off" />
+        <div id="canvas-container"><canvas id="drawCanvas"></canvas></div>
+        <div id="tools">
+          <button id="clearBtn">Clear Canvas</button>
+          <button class="color-btn" style="background:black;" data-color="black"></button>
+          <button class="color-btn" style="background:red;" data-color="red"></button>
+          <button class="color-btn" style="background:blue;" data-color="blue"></button>
+          <button class="color-btn" style="background:linear-gradient(90deg, red, orange, yellow, green, blue, violet);" data-color="rainbow">Rainbow</button>
+          <button id="sendBtn">Send</button>
+        </div>
       </div>
-
-      <div id="tools">
-        <button id="clearBtn">Clear Canvas</button>
-        <button class="color-btn" style="background:black;" data-color="black"></button>
-        <button class="color-btn" style="background:red;" data-color="red"></button>
-        <button class="color-btn" style="background:blue;" data-color="blue"></button>
-        <button class="color-btn" style="background:linear-gradient(90deg, red, orange, yellow, green, blue, violet);" data-color="rainbow">🌈</button>
-        <button id="sendBtn" style="margin-left:auto;">Send</button>
-      </div>
+      <div id="status"></div>
     </div>
 
-    <div id="status">Offline? Changes will sync when back online.</div>
+    <div id="user-list-container">
+      <div id="user-list-header">Online Users (<span id="online-count">0</span>)</div>
+      <div id="users"></div>
+    </div>
   </div>
 
-  <!-- NICKNAME MODAL -->
+  <!-- Nickname Modal -->
   <div id="nameModal">
     <div>
       <h2>Choose your nickname</h2>
@@ -225,270 +63,7 @@
     </div>
   </div>
 
-  <!-- Firebase SDK v12.9.0 -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-    import { getDatabase, ref, push, set, onChildAdded, onValue, serverTimestamp, query, limitToLast, onDisconnect } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
-
-    // ← PASTE YOUR FIREBASE CONFIG HERE
-       const firebaseConfig = {
-
-  apiKey: "AIzaSyABYcqyz8s5gqH7NVRwKurlsU9WfnXoS7A",
-
-  authDomain: "cloudchat-bcbad.firebaseapp.com",
-
-  databaseURL: "https://cloudchat-bcbad-default-rtdb.firebaseio.com",
-
-  projectId: "cloudchat-bcbad",
-
-  storageBucket: "cloudchat-bcbad.firebasestorage.app",
-
-  messagingSenderId: "966250985643",
-
-  appId: "1:966250985643:web:5d4fe6b54e715388921fee"
-
-};
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-
-    const messagesRef = ref(db, 'pictoMessages');
-    const presenceRef = ref(db, 'presence');
-
-    let currentUser;
-    let canvas, ctx, isDrawing = false, currentColor = 'black';
-
-    // JOIN
-    document.getElementById('signInBtn').onclick = async () => {
-      try {
-        await signInAnonymously(auth);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    // AUTH STATE
-    onAuthStateChanged(auth, async user => {
-      if (user) {
-        currentUser = user;
-        document.getElementById('auth').style.display = 'none';
-        document.getElementById('chat').style.display = 'block';
-
-        let displayName = user.displayName || `Guest_${user.uid.slice(0,6)}`;
-        if (!user.displayName) {
-          await updateProfile(user, { displayName });
-          await set(ref(db, `presence/${user.uid}`), {
-            name: displayName,
-            online: true,
-            lastActive: serverTimestamp()
-          });
-        }
-
-        document.getElementById('myName').innerHTML = `
-          You are: <strong id="currentNameDisplay">${displayName}</strong>
-          <button id="changeNameBtn" style="margin-left:12px; font-size:0.9rem; padding:6px 12px; background:#e2e8f0; color:#1e293b; border:none; border-radius:8px; cursor:pointer;">Change Nickname</button>
-        `;
-
-        if (!user.displayName || user.displayName.startsWith('Guest_')) {
-          setTimeout(openNameModal, 600);
-        }
-
-        document.getElementById('changeNameBtn').addEventListener('click', openNameModal);
-
-        initCanvas();
-        setupPresenceAndListeners();
-      } else {
-        document.getElementById('chat').style.display = 'none';
-        document.getElementById('auth').style.display = 'block';
-      }
-    });
-
-    function openNameModal() {
-      const modal = document.getElementById('nameModal');
-      const input = document.getElementById('newNameInput');
-      const errorEl = document.getElementById('modalError');
-      modal.style.display = 'flex';
-      input.value = currentUser.displayName || '';
-      input.focus();
-      errorEl.textContent = '';
-    }
-
-    document.getElementById('cancelNameBtn').addEventListener('click', () => {
-      document.getElementById('nameModal').style.display = 'none';
-    });
-
-    document.getElementById('saveNameBtn').addEventListener('click', async () => {
-      const input = document.getElementById('newNameInput');
-      const errorEl = document.getElementById('modalError');
-      let newName = input.value.trim();
-
-      errorEl.textContent = '';
-
-      if (newName.length < 3) {
-        errorEl.textContent = 'Nickname must be at least 3 characters';
-        input.focus();
-        return;
-      }
-      if (newName.length > 25) {
-        errorEl.textContent = 'Nickname is too long (max 25 chars)';
-        return;
-      }
-
-      try {
-        await updateProfile(currentUser, { displayName: newName });
-        await set(ref(db, `presence/${currentUser.uid}/name`), newName);
-
-        document.getElementById('currentNameDisplay').textContent = newName;
-        document.getElementById('nameModal').style.display = 'none';
-
-        showStatus(`✓ Name changed to ${newName}!`, '#10b981');
-      } catch (err) {
-        console.error(err);
-        errorEl.textContent = 'Could not save — check your connection';
-      }
-    });
-
-    function showStatus(message, color = '#10b981') {
-      let status = document.getElementById('status');
-      if (!status) {
-        status = document.createElement('div');
-        status.id = 'status';
-        status.style.padding = '12px';
-        status.style.textAlign = 'center';
-        status.style.fontWeight = '600';
-        document.getElementById('input-area').prepend(status);
-      }
-      status.style.color = color;
-      status.textContent = message;
-      setTimeout(() => { if (status) status.remove(); }, 3000);
-    }
-
-    // CANVAS
-    function initCanvas() {
-      canvas = document.getElementById('drawCanvas');
-      ctx = canvas.getContext('2d');
-      canvas.width = canvas.offsetWidth;
-      canvas.height = 220;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = currentColor;
-
-      const draw = e => {
-        if (!isDrawing) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX || e.touches?.[0]?.clientX || 0) - rect.left;
-        const y = (e.clientY || e.touches?.[0]?.clientY || 0) - rect.top;
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-      };
-
-      const start = e => { e.preventDefault(); isDrawing = true; ctx.beginPath(); draw(e); };
-      const move = e => { e.preventDefault(); draw(e); };
-      const stop = () => isDrawing = false;
-
-      canvas.addEventListener('pointerdown', start);
-      canvas.addEventListener('pointermove', move);
-      canvas.addEventListener('pointerup', stop);
-      canvas.addEventListener('pointerout', stop);
-
-      document.querySelectorAll('.color-btn').forEach(btn => {
-        btn.onclick = () => {
-          currentColor = btn.dataset.color;
-          ctx.strokeStyle = currentColor === 'rainbow' ? createRainbow() : currentColor;
-        };
-      });
-
-      document.getElementById('clearBtn').onclick = () => ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      window.addEventListener('resize', () => {
-        const temp = canvas.toDataURL();
-        canvas.width = canvas.offsetWidth;
-        const img = new Image();
-        img.src = temp;
-        img.onload = () => ctx.drawImage(img, 0, 0);
-      });
-    }
-
-    function createRainbow() {
-      const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      grad.addColorStop(0, 'red'); grad.addColorStop(0.17, 'orange');
-      grad.addColorStop(0.33, 'yellow'); grad.addColorStop(0.5, 'green');
-      grad.addColorStop(0.67, 'blue'); grad.addColorStop(0.83, 'indigo'); grad.addColorStop(1, 'violet');
-      return grad;
-    }
-
-    // SEND MESSAGE
-    document.getElementById('sendBtn').onclick = async () => {
-      const text = document.getElementById('messageInput').value.trim();
-      const hasDraw = ctx.getImageData(0,0,canvas.width,canvas.height).data.some(v => v > 0);
-
-      if (!text && !hasDraw) return;
-
-      let image = null;
-      if (hasDraw) {
-        image = canvas.toDataURL('image/png', 0.92);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-
-      const name = currentUser?.displayName || `Guest_${currentUser?.uid?.slice(0,6) || '???'}`;
-
-      const newRef = push(messagesRef);
-      await set(newRef, {
-        text: text || null,
-        image,
-        uid: currentUser?.uid,
-        name,
-        createdAt: serverTimestamp()
-      });
-
-      document.getElementById('messageInput').value = '';
-    };
-
-    // PRESENCE & MESSAGES
-    function setupPresenceAndListeners() {
-      onValue(ref(db, '.info/connected'), snap => {
-        if (snap.val() === true && currentUser) {
-          const myRef = ref(db, `presence/${currentUser.uid}`);
-          set(myRef, {
-            name: currentUser.displayName || `Guest_${currentUser.uid.slice(0,6)}`,
-            online: true,
-            lastActive: serverTimestamp()
-          });
-          onDisconnect(myRef).remove();
-        }
-      });
-
-      onValue(presenceRef, snap => {
-        const count = Object.keys(snap.val() || {}).length;
-        document.getElementById('online').textContent = 
-          count > 1 ? `${count} people here right now ✏️` : "Just you – invite some friends!";
-      });
-    }
-
-    onChildAdded(query(messagesRef, limitToLast(150)), snap => {
-      const msg = snap.val();
-      if (!msg) return;
-
-      const div = document.createElement('div');
-      div.className = `msg ${msg.uid === currentUser?.uid ? 'self' : 'other'}`;
-      div.innerHTML = `<strong>${msg.name || 'Anon'}</strong>`;
-
-      if (msg.text) div.innerHTML += ` ${msg.text}`;
-      if (msg.image) {
-        const img = document.createElement('img');
-        img.src = msg.image;
-        img.alt = "Doodle";
-        div.appendChild(img);
-      }
-
-      document.getElementById('messages').appendChild(div);
-      div.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    });
-  </script>
+  <!-- Firebase SDKs -->
+  <script type="module" src="script.js"></script>
 </body>
 </html>
