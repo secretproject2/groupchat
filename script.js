@@ -195,37 +195,89 @@ document.getElementById('sendBtn').onclick = async () => {
 };
 
 // Presence & User List
-function setupPresenceAndListeners() {
-  onValue(ref(db, '.info/connected'), snap => {
-    if (snap.val() && currentUser) {
-      const myRef = ref(db, `presence/${currentUser.uid}`);
-      set(myRef, {
-        name: currentUser.displayName || `Guest_${currentUser.uid.slice(0,6)}`,
-        online: true,
-        lastActive: serverTimestamp()
-      });
-      onDisconnect(myRef).remove();
+// ────────────────────────────────────────────────
+// Realtime listeners (presence + messages)
+// ────────────────────────────────────────────────
+function setupRealtimeListeners() {
+  // Connection status
+  onValue(connectedRef, (snap) => {
+    const isConnected = snap.val() === true;
+    console.log("[CONNECTION] State changed →", isConnected ? "CONNECTED" : "DISCONNECTED");
+
+    document.getElementById('online').textContent = isConnected 
+      ? "Connected – loading users..." 
+      : "Connecting to server... (check network/VPN/adblock)";
+
+    if (!isConnected) {
+      showStatus("Connection lost – will retry", '#f59e0b');
+    }
+  }, (error) => {
+    console.error("[CONNECTION ERROR]", error);
+    document.getElementById('online').textContent = "Connection error: " + error.message;
+  });
+
+  // My presence (only attempt write when connected)
+  onValue(connectedRef, async (snap) => {
+    if (snap.val() === true && currentUser) {
+      console.log("[PRESENCE] Writing my status...");
+      try {
+        const myRef = ref(db, `presence/${currentUser.uid}`);
+        await set(myRef, {
+          name: currentUser.displayName || `Guest_${currentUser.uid.slice(0,6)}`,
+          online: true,
+          lastActive: serverTimestamp()
+        });
+        console.log("[PRESENCE] Write successful");
+        onDisconnect(myRef).remove();
+      } catch (err) {
+        console.error("[PRESENCE WRITE ERROR]", err);
+      }
     }
   });
 
-  onValue(presenceRef, snap => {
+  // All online users
+  onValue(presenceRef, (snap) => {
     const usersDiv = document.getElementById('users');
     const countEl = document.getElementById('online-count');
     usersDiv.innerHTML = '';
 
     const users = snap.val() || {};
-    const onlineUsers = Object.entries(users).filter(([_, data]) => data.online);
+    const online = Object.entries(users).filter(([_, v]) => v?.online === true);
 
-    countEl.textContent = onlineUsers.length;
-    document.getElementById('online').textContent =
-      onlineUsers.length > 1 ? `${onlineUsers.length} people doodling ✏️` : "Just you – invite friends!";
+    countEl.textContent = online.length;
 
-    onlineUsers.forEach(([_, data]) => {
+    if (online.length === 0) {
+      document.getElementById('online').textContent = "Connected, but no one else here yet";
+    }
+
+    online.forEach(([_, data]) => {
       const item = document.createElement('div');
       item.className = 'user-item';
-      item.innerHTML = `<div class="status-dot"></div><span class="user-name">${data.name || 'Anon'}</span>`;
+      item.innerHTML = `<div class="status-dot"></div><span class="user-name">${data.name || 'Anonymous'}</span>`;
       usersDiv.appendChild(item);
     });
+  }, (err) => {
+    console.error("[PRESENCE LIST ERROR]", err);
+  });
+
+  // Chat messages
+  onChildAdded(query(messagesRef, limitToLast(150)), (snap) => {
+    const msg = snap.val();
+    if (!msg) return;
+
+    const div = document.createElement('div');
+    div.className = `msg ${msg.uid === currentUser?.uid ? 'self' : 'other'}`;
+    div.innerHTML = `<strong>${msg.name || 'Anon'}</strong>`;
+    if (msg.text) div.innerHTML += ` ${msg.text}`;
+    if (msg.image) {
+      const img = document.createElement('img');
+      img.src = msg.image;
+      img.alt = "Doodle";
+      div.appendChild(img);
+    }
+
+    document.getElementById('messages').appendChild(div);
+    div.scrollIntoView({ behavior: 'smooth', block: 'end' });
   });
 }
 
