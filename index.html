@@ -1,70 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>PictoGroup Chat</title>
-  <style>
-    body { font-family: Arial, sans-serif; background:#f0f0f0; margin:0; padding:10px; }
-    #chat { max-width: 700px; margin: 0 auto; background:white; border-radius:8px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
-    #messages { height: 400px; overflow-y: auto; padding: 15px; background:#fafafa; }
-    .msg { margin: 10px 0; padding: 8px 12px; border-radius: 12px; max-width: 80%; word-wrap: break-word; }
-    .msg.self { background: #dcf8c6; align-self: flex-end; margin-left: auto; }
-    .msg.other { background: #fff; border: 1px solid #ddd; }
-    .msg img { max-width: 100%; border-radius: 6px; margin-top: 6px; display: block; }
-    #input-area { display: flex; flex-direction: column; padding: 10px; border-top: 1px solid #ddd; }
-    #messageInput { padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 8px; }
-    #canvas-container { border: 2px dashed #aaa; border-radius: 8px; margin-bottom: 8px; background:#fff; }
-    #drawCanvas { width: 100%; height: 180px; touch-action: none; }
-    #tools { display: flex; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
-    button { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; }
-    #sendBtn { background: #4CAF50; color: white; font-weight: bold; }
-    #clearBtn { background: #f44336; color: white; }
-    #colorBtns button { width: 36px; height: 36px; border-radius: 50%; }
-    #online { padding: 10px; background: #e8f5e9; text-align: center; font-weight: bold; }
-  </style>
-</head>
-<body>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+  import { getDatabase, ref, push, set, onChildAdded, onValue, serverTimestamp, query, limitToLast, remove } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 
-  <div id="auth" style="text-align:center; margin: 60px 20px;">
-    <h1>PictoGroup Chat</h1>
-    <p style="color:#555;">Like old-school PictoChat — draw & chat in one global room!</p>
-    <button id="signInBtn" style="padding:12px 24px; font-size:18px;">Join Anonymously</button>
-  </div>
-
-  <div id="chat" style="display:none;">
-    <div id="online">Waiting for friends...</div>
-    <div id="messages"></div>
-
-    <div id="input-area">
-      <input type="text" id="messageInput" placeholder="Type something... or just draw ↓">
-
-      <div id="canvas-container">
-        <canvas id="drawCanvas"></canvas>
-      </div>
-
-      <div id="tools">
-        <button id="clearBtn">Clear Drawing</button>
-        <div>
-          <label>Color: </label>
-          <button style="background:black;" data-color="black"></button>
-          <button style="background:red;" data-color="red"></button>
-          <button style="background:blue;" data-color="blue"></button>
-          <button style="background:linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);" data-color="rainbow">🌈</button>
-        </div>
-        <button id="sendBtn">Send →</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Firebase SDKs -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-    import { getDatabase, ref, push, set, onChildAdded, onValue, serverTimestamp, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
-
-    // YOUR FIREBASE CONFIG HERE (same as before)
-    const firebaseConfig = {
+  // YOUR FIREBASE CONFIG HERE (paste yours)
+     const firebaseConfig = {
 
   apiKey: "AIzaSyABYcqyz8s5gqH7NVRwKurlsU9WfnXoS7A",
 
@@ -81,153 +21,210 @@
   appId: "1:966250985643:web:5d4fe6b54e715388921fee"
 
 };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
 
+  const messagesRef = ref(db, 'pictoMessages');
+  const presenceRef = ref(db, 'presence');
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
+  let currentUser;
 
-    const messagesRef = ref(db, 'pictoMessages');
-    const onlineRef = ref(db, '.info/connected');
-    const presenceRef = ref(db, 'presence');
+  // Auth flow with name prompt
+  document.getElementById('signInBtn').onclick = async () => {
+    try {
+      const cred = await signInAnonymously(auth);
+      const user = cred.user;
 
-    let currentUser;
-    let canvas, ctx, drawing = false, color = 'black';
+      // Prompt for name right after anonymous sign-in
+      let name = prompt("Pick a fun nickname for the chat! (3+ chars)", `Guest_${user.uid.slice(0,6)}`);
+      name = (name || "").trim();
 
-    // Auth
-    document.getElementById('signInBtn').onclick = () => signInAnonymously(auth);
-
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        currentUser = user;
-        document.getElementById('auth').style.display = 'none';
-        document.getElementById('chat').style.display = 'block';
-        initCanvas();
-        setupPresence();
-      } else {
-        document.getElementById('chat').style.display = 'none';
-        document.getElementById('auth').style.display = 'block';
+      if (name.length < 3) {
+        name = `Guest_${user.uid.slice(0,6)}`; // fallback
       }
-    });
 
-    // Simple presence (online count)
-    function setupPresence() {
-      onValue(onlineRef, snap => {
-        if (snap.val() === true) {
-          const myPresence = ref(db, 'presence/' + currentUser.uid);
-          set(myPresence, { online: true, name: `Guest_${currentUser.uid.slice(0,6)}` });
-          // Cleanup on disconnect
-          set(ref(db, 'presence/' + currentUser.uid), null, { merge: true });
+      // Save to Firebase Auth profile (works for anonymous!)
+      await updateProfile(user, { displayName: name });
+
+      // Also save to presence for online list
+      await set(ref(db, `presence/${user.uid}`), {
+        name: name,
+        online: true,
+        lastSeen: serverTimestamp()
+      });
+
+      alert(`Welcome, ${name}! 🎉`);
+    } catch (error) {
+      console.error("Sign-in failed:", error);
+      alert("Oops, something went wrong. Try again!");
+    }
+  };
+
+  onAuthStateChanged(auth, user => {
+    if (user) {
+      currentUser = user;
+      document.getElementById('auth').style.display = 'none';
+      document.getElementById('chat').style.display = 'block';
+
+      // Show current name in online area or add a header
+      const nameDisplay = document.createElement('div');
+      nameDisplay.id = 'myName';
+      nameDisplay.style.padding = '10px';
+      nameDisplay.style.background = '#e3f2fd';
+      nameDisplay.style.textAlign = 'center';
+      nameDisplay.innerHTML = `You are: <strong>${user.displayName || 'Mystery Guest'}</strong> 
+        <button id="changeNameBtn" style="margin-left:10px; font-size:12px;">Change Name</button>`;
+      document.getElementById('online').before(nameDisplay);
+
+      // Optional: Change name button
+      document.getElementById('changeNameBtn')?.addEventListener('click', async () => {
+        let newName = prompt("New nickname?", user.displayName || "");
+        newName = (newName || "").trim();
+        if (newName.length >= 3) {
+          await updateProfile(user, { displayName: newName });
+          await set(ref(db, `presence/${user.uid}/name`), newName);
+          document.querySelector('#myName strong').textContent = newName;
         }
       });
 
-      onValue(ref(db, 'presence'), snap => {
-        const count = snap.exists() ? Object.keys(snap.val() || {}).length : 0;
-        document.getElementById('online').textContent = count > 1 
-          ? `${count} people doodling right now! ✏️`
-          : "Just you... waiting for friends to join! 🎨";
-      });
+      initCanvas();
+      setupPresence();
+    } else {
+      document.getElementById('chat').style.display = 'none';
+      document.getElementById('auth').style.display = 'block';
+      // Clean up any extra elements if needed
+      document.getElementById('myName')?.remove();
     }
+  });
 
-    // Canvas drawing
-    function initCanvas() {
-      canvas = document.getElementById('drawCanvas');
-      ctx = canvas.getContext('2d');
-      canvas.width = canvas.offsetWidth;
-      canvas.height = 180;
-      ctx.lineCap = 'round';
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = color;
+  // Presence / online count (now shows names too if you want to expand later)
+  function setupPresence() {
+    onValue(ref(db, '.info/connected'), snap => {
+      if (snap.val() === true && currentUser) {
+        const myRef = ref(db, `presence/${currentUser.uid}`);
+        set(myRef, {
+          name: currentUser.displayName || `Guest_${currentUser.uid.slice(0,6)}`,
+          online: true,
+          lastSeen: serverTimestamp()
+        });
 
-      // Events
-      const draw = e => {
-        if (!drawing) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX || e.touches[0].clientX) - rect.left;
-        const y = (e.clientY || e.touches[0].clientY) - rect.top;
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-      };
-
-      canvas.addEventListener('mousedown', e => { drawing = true; ctx.beginPath(); draw(e); });
-      canvas.addEventListener('mousemove', draw);
-      canvas.addEventListener('mouseup', () => drawing = false);
-      canvas.addEventListener('mouseout', () => drawing = false);
-      canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; ctx.beginPath(); draw(e); });
-      canvas.addEventListener('touchmove', e => { e.preventDefault(); draw(e); });
-      canvas.addEventListener('touchend', () => drawing = false);
-
-      // Color picker
-      document.querySelectorAll('#tools button[data-color]').forEach(btn => {
-        btn.onclick = () => {
-          color = btn.dataset.color;
-          ctx.strokeStyle = color === 'rainbow' ? createRainbowGradient() : color;
-        };
-      });
-
-      document.getElementById('clearBtn').onclick = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      };
-    }
-
-    function createRainbowGradient() {
-      const grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
-      grad.addColorStop(0, 'red');
-      grad.addColorStop(0.2, 'orange');
-      grad.addColorStop(0.4, 'yellow');
-      grad.addColorStop(0.6, 'green');
-      grad.addColorStop(0.8, 'blue');
-      grad.addColorStop(1, 'violet');
-      return grad;
-    }
-
-    // Send message
-    document.getElementById('sendBtn').onclick = async () => {
-      const text = document.getElementById('messageInput').value.trim();
-      const hasDrawing = ctx.getImageData(0,0,canvas.width,canvas.height).data.some(v => v !== 0);
-
-      if (!text && !hasDrawing) return;
-
-      let imageData = null;
-      if (hasDrawing) {
-        imageData = canvas.toDataURL('image/png');
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // clear after send
+        // Auto-remove on disconnect
+        onDisconnect(myRef).remove();
       }
+    });
 
-      const newMsgRef = push(messagesRef);
-      set(newMsgRef, {
-        text: text || null,
-        image: imageData,
-        uid: currentUser.uid,
-        name: `Guest_${currentUser.uid.slice(0,6)}`,
-        createdAt: serverTimestamp()
-      });
+    onValue(presenceRef, snap => {
+      const users = snap.val() || {};
+      const count = Object.keys(users).length;
+      let text = count > 1 ? `${count} people doodling! ✏️` : "Just you for now... invite friends!";
+      
+      // Optional: show list of names (uncomment if you want)
+      // const names = Object.values(users).map(u => u.name || 'Anon').join(', ');
+      // text += ` (${names})`;
 
-      document.getElementById('messageInput').value = '';
+      document.getElementById('online').textContent = text;
+    });
+  }
+
+  // Canvas setup (unchanged from before, just keeping it here for completeness)
+  let canvas, ctx, drawing = false, color = 'black';
+
+  function initCanvas() {
+    canvas = document.getElementById('drawCanvas');
+    ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = 180;
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = color;
+
+    const draw = e => {
+      if (!drawing) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+      const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y);
     };
 
-    // Show messages (limit to last 100 for performance)
-    onChildAdded(query(messagesRef, limitToLast(100)), snapshot => {
-      const msg = snapshot.val();
-      const div = document.createElement('div');
-      div.className = `msg ${msg.uid === currentUser?.uid ? 'self' : 'other'}`;
-      if (msg.name) {
-        const nameSpan = document.createElement('strong');
-        nameSpan.textContent = msg.name + ': ';
-        div.appendChild(nameSpan);
-      }
-      if (msg.text) div.appendChild(document.createTextNode(msg.text));
-      if (msg.image) {
-        const img = document.createElement('img');
-        img.src = msg.image;
-        img.alt = "Drawn message";
-        div.appendChild(img);
-      }
-      document.getElementById('messages').appendChild(div);
-      div.scrollIntoView({ behavior: 'smooth' });
+    ['mousedown', 'touchstart'].forEach(ev => canvas.addEventListener(ev, e => { 
+      drawing = true; 
+      ctx.beginPath(); 
+      draw(e); 
+    }, { passive: false }));
+
+    ['mousemove', 'touchmove'].forEach(ev => canvas.addEventListener(ev, draw, { passive: false }));
+
+    ['mouseup', 'mouseout', 'touchend', 'touchcancel'].forEach(ev => 
+      canvas.addEventListener(ev, () => drawing = false));
+
+    document.querySelectorAll('#tools button[data-color]').forEach(btn => {
+      btn.onclick = () => {
+        color = btn.dataset.color;
+        ctx.strokeStyle = color === 'rainbow' ? createRainbowGradient() : color;
+      };
     });
-  </script>
-</body>
-</html>
+
+    document.getElementById('clearBtn').onclick = () => ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function createRainbowGradient() {
+    const grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    grad.addColorStop(0, 'red'); grad.addColorStop(0.2, 'orange');
+    grad.addColorStop(0.4, 'yellow'); grad.addColorStop(0.6, 'green');
+    grad.addColorStop(0.8, 'blue'); grad.addColorStop(1, 'violet');
+    return grad;
+  }
+
+  // Send message (updated to use displayName)
+  document.getElementById('sendBtn').onclick = async () => {
+    const text = document.getElementById('messageInput').value.trim();
+    const hasDrawing = ctx.getImageData(0,0,canvas.width,canvas.height).data.some(v => v !== 0);
+
+    if (!text && !hasDrawing) return;
+
+    let imageData = null;
+    if (hasDrawing) {
+      imageData = canvas.toDataURL('image/png');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    const nameToUse = currentUser.displayName || `Guest_${currentUser.uid.slice(0,6)}`;
+
+    const newMsgRef = push(messagesRef);
+    await set(newMsgRef, {
+      text: text || null,
+      image: imageData,
+      uid: currentUser.uid,
+      name: nameToUse,
+      createdAt: serverTimestamp()
+    });
+
+    document.getElementById('messageInput').value = '';
+  };
+
+  // Display messages
+  onChildAdded(query(messagesRef, limitToLast(100)), snapshot => {
+    const msg = snapshot.val();
+    const div = document.createElement('div');
+    div.className = `msg ${msg.uid === currentUser?.uid ? 'self' : 'other'}`;
+    
+    const nameSpan = document.createElement('strong');
+    nameSpan.textContent = (msg.name || 'Anon') + ': ';
+    div.appendChild(nameSpan);
+    
+    if (msg.text) div.appendChild(document.createTextNode(msg.text));
+    if (msg.image) {
+      const img = document.createElement('img');
+      img.src = msg.image;
+      img.alt = "Drawn pic";
+      div.appendChild(img);
+    }
+    
+    document.getElementById('messages').appendChild(div);
+    div.scrollIntoView({ behavior: 'smooth' });
+  });
+</script>
